@@ -1,15 +1,15 @@
 ## Running
 
-Make sure to add a `config.js` file in the `config` folder. See the example there for more details.
+Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.C`:
 
-Production mode:
+sensorSO.c:
 
 ```shell
-npm start
+gcc sensorSO.c -o sensorSO -lm
 ```
 
-Development (Webpack dev server) mode:
+lector.c:
 
 ```shell
-npm run start:dev
+gcc lector.c -o lector -lc
 ```
