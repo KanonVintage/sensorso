@@ -1,6 +1,6 @@
 ## Running
 
-Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.C`:
+Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.c`:
 
 sensorSO.c:
 ```shell
