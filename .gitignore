@@ -1,5 +1,6 @@
 # Compiled files
-
+compiled/*
+!compiled/sensorSO
 
 # OS stuff
 Desktop.ini

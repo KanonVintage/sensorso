@@ -4,10 +4,10 @@ Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.c`:
 
 sensorSO.c:
 ```shell
-gcc sensorSO.c -o sensorSO -lm
+gcc -g sensorSO.c -o compiled/sensorSO -lm
 ```
 
 lector.c:
 ```shell
-gcc lector.c -o lector -lc
+gcc -g lector.c -o compiled/lector -lc
 ```
