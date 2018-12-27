@@ -42,6 +42,7 @@ int main()
         perror("shmat");
         return(1);
     }
+    //printf("1: %d %d %s\n", keyd, shmidd, shmd);
     keyt = 5678;
     if ((shmidt = shmget(keyt, SHMSZ,  0666)) < 0) {
         perror("shmget");
