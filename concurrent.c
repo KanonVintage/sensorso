@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 //constants
 #define SHMSZ 27 
@@ -14,6 +15,7 @@
 key_t* 	keyset;
 int* 	shmidset, n;
 char**	shmset;
+int val[2]={0,0};
 
 void* sensorReader(void* arg){
 	char* msg = (char*) arg;
@@ -28,21 +30,58 @@ void* sensorReader(void* arg){
 	return NULL;
 }
 
-int main(int argc, char* argv[]){
-	char tmpd[SHMSZ];
-    char oldt[SHMSZ];
-    char tmpt[SHMSZ];
+void sighand(int signo, siginfo_t *info, void *extra){
+	int int_val = info->si_value.sival_int;
+    if(int_val==0){
+     	//printf("Signal handler installed, waiting for signal\n");
+    }else if(int_val<0){
+	    printf("Signal: %d, value: [%d]\n", signo, int_val);
+	}else{
+		if(signo==10) val[0]=int_val;
+		else if(signo==12) val[1]=int_val;
+		else printf("Ese sensor o accion no existe");
+	    //printf("Signal: %d, value: [%d]\n", signo, int_val);
+	}
+}
 
+void sighandler(int signum) {
+   printf("\nCaught signal %d, coming out...\n", signum);
+   exit(1);
+}
+
+int main(int argc, char* argv[]){
+    char **arr;
+    char **old;
+    int c=0;
+    int pid;
+    int x=0,y=0, i;
+
+	struct sigaction action;
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = &sighand;
+    if ((sigaction(SIGUSR1, &action, NULL)==-1)||(sigaction(SIGUSR2, &action, NULL)==-1)) {
+        perror("sigusr: sigaction");
+        return 0;
+    }
+    signal(SIGINT, sighandler);
+
+    pid=getpid();
+    printf("PID: %d\n", pid);
     printf("Cuantos sensores existen: ");
     scanf("%d", &n);
     keyset = (key_t*)malloc(n*sizeof(key_t));
     shmidset = (int*)malloc(n*sizeof(int));
     shmset = (char**)malloc(n*sizeof(char*));
+    old = (char**) calloc(n, sizeof(char*));
+    arr = (char**) calloc(n, sizeof(char*));
+	for (i=0; i<n; i++){
+		old[i] = (char*) calloc(SHMSZ, sizeof(char));
+	    arr[i] = (char*) calloc(SHMSZ, sizeof(char));
+	}
 
-    for(int c=0; c<n; c++){
+    for(c=0; c<n; c++){
     	printf("Key id del sensor %d: ", c+1);
     	scanf("%d", &keyset[c]);
-
 	    if ((shmidset[c] = shmget(keyset[c], SHMSZ, 0666)) < 0) {
 	        perror("shmget");
 	        return(1);
@@ -51,24 +90,39 @@ int main(int argc, char* argv[]){
 	        perror("shmat");
 	        return(1);
 	    }
-	   	//printf("%d: %d %d %s\n", c+1, keyset[c], shmidset[c], shmset[c]);
     }
 
     while(1){
-		strcpy(tmpt,shmset[1]);
-		if ((strcmp(tmpt,"--")!=0)&&(strcmp(oldt,tmpt)!=0)){
-			fprintf(stdout,"giroscopio: %s\n",tmpt);
-			strcpy(oldt,tmpt);
-        }
-		if (strcmp(shmset[0],tmpd)!=0){
-			fprintf(stderr,"distancia %s\n",shmset[0]);
-			strcpy(tmpd,shmset[0]);
-		}
+    	x=val[0];
+    	y=val[1];
+    	for(c=0; c<n; c++){
+			if (c==0){
+				if(strcmp(shmset[c],arr[c])!=0){
+					fprintf(stderr,"distancia %s\n",arr[c]);
+				}
+			}
+			if (c==1){
+				if ((strcmp(arr[c],"--")!=0)&&(strcmp(old[c],arr[c])!=0)){
+					fprintf(stdout,"giroscopio: %s\n",arr[c]);
+					strcpy(old[c],arr[c]);
+				}
+	        }
+	        if (c>=2){
+	        	printf("\nSensor:%d\tAccion:%d", x, y);
+	        }
+	        strcpy(arr[c],shmset[c]);
+    	}
 	}
 
 	free(keyset);
     free(shmidset);
     free(shmset);
+    for (i = 0; i < n; i++ ){
+	    free(arr[i]);
+	    free(old[i]);
+	}
+	free(old);
+	free(arr);
 
     return(0);
 }
