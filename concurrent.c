@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
 	}
 
     for(c=0; c<n; c++){
-    	printf("Key id del sensor %d: ", c+1);
+    	printf("Key id del sensor %d: ", c);
     	scanf("%d", &keyset[c]);
 	    if ((shmidset[c] = shmget(keyset[c], SHMSZ, 0666)) < 0) {
 	        perror("shmget");
@@ -90,28 +90,54 @@ int main(int argc, char* argv[]){
 	        perror("shmat");
 	        return(1);
 	    }
+	    strcpy(shmset[c],"--");
     }
 
     while(1){
     	x=val[0];
     	y=val[1];
-    	for(c=0; c<n; c++){
-			if (c==0){
-				if(strcmp(shmset[c],arr[c])!=0){
-					fprintf(stderr,"distancia %s\n",arr[c]);
+    	int flag=1;
+
+    	while(flag){
+    		for(c=0; c<n; c++){
+    			strcpy(arr[c],shmset[c]);
+				if(c>0){
+					
+					if ((strcmp(arr[c],"--")!=0)&&(strcmp(old[c],arr[c])!=0)){
+						//fprintf(stdout,"giroscopio: %s\n",arr[c]);
+						flag=0;
+						strcpy(old[c],arr[c]);
+		        	}
+		        }
+				if(c==0){
+					if (strcmp(shmset[c],arr[c])!=0){
+						//fprintf(stderr,"distancia %s\n",shmset[c]);
+					}
+					//strcpy(arr[c],shmset[c]);
 				}
-			}
-			if (c==1){
-				if ((strcmp(arr[c],"--")!=0)&&(strcmp(old[c],arr[c])!=0)){
-					fprintf(stdout,"giroscopio: %s\n",arr[c]);
-					strcpy(old[c],arr[c]);
-				}
-	        }
-	        if (c>=2){
-	        	printf("\nSensor:%d\tAccion:%d", x, y);
-	        }
-	        strcpy(arr[c],shmset[c]);
+				if(x==c){
+					if(y==0){
+						val[1]=0;
+					}
+		    		if(y==1){
+		    			strcpy(arr[c],"off");
+		    		}else if(y>1){
+		    			val[1]=0;
+		    			strcpy(arr[c],"reboot");
+		    		}
+		    	}
+    		}
     	}
+
+    	if(flag==0){
+	    	for(c=0; c<n; c++){
+	    		if(c>1) printf("\nSensor:%d\tAccion:%d\t%s", c, y, arr[c]);
+	    		if(c==0) printf("\nDistancia:%d\tAccion:%d\t%s", c, y, arr[c]);
+	    		if(c==1) printf("\nGiroscopio:%d\tAccion:%d\t%s", c, y, arr[c]);
+	    	}
+	    	//sleep(3);
+    	}
+    	printf("\nAHHHHH\n");
 	}
 
 	free(keyset);

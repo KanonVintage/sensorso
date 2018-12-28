@@ -30,7 +30,7 @@ void main(){
 	        perror("SIGSENT-ERROR:");
 	    }
 
-    	printf("Que accion desea realizar: 1. Iniciar\t2.Terminar\t3.Reiniciar\n");
+    	printf("Que accion desea realizar: 0. Iniciar\t1.Terminar\t2.Reiniciar\n");
     	scanf("%d",&value.sival_int);
 
 		if(sigqueue(pid, SIGUSR2, value) == 0) {
