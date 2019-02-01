@@ -1,5 +1,6 @@
 # Compiled files
 compiled/*
+old
 .vscode
 !compiled/startup.x
 
