@@ -1,4 +1,6 @@
-## Correr makeit para compilar y correr
+## Correr `makeit` para compilar y correr
+
+`startup.x` es el archivo de configuracion
 
 Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.c`:
 
