@@ -28,27 +28,33 @@ int shmidd,shmidt;
 key_t keyd,keyt;
 char *shmd, *shmt;
 
-int main()
-{
+
+int main(int argc, char **argv){
 	char tmpd[SHMSZ];
     char oldt[SHMSZ];
     char tmpt[SHMSZ];
-    keyd = 1234;
+    int keya, keyb;
+
+    printf("Hello: %s	%s:%s\n",argv[1],argv[2],argv[3]);
+    sscanf(argv[2], "%d", &keya);
+	sscanf(argv[3], "%d", &keyb);
+
+    keyd = keya;
     if ((shmidd = shmget(keyd, SHMSZ, 0666)) < 0) {
         perror("shmget");
         return(1);
     }
-    if ((shmd = shmat(shmidd, NULL, 0)) == (char *) -1) {
+    if ((shmd = (char *)shmat(shmidd, NULL, 0)) == (char *) -1) {
         perror("shmat");
         return(1);
     }
     //printf("1: %d %d %s\n", keyd, shmidd, shmd);
-    keyt = 5678;
+    keyt = keyb;
     if ((shmidt = shmget(keyt, SHMSZ,  0666)) < 0) {
         perror("shmget");
         return(1);
     }
-    if ((shmt = shmat(shmidt, NULL, 0)) == (char *) -1) {
+    if ((shmt = (char *)shmat(shmidt, NULL, 0)) == (char *) -1) {
         perror("shmat");
         return(1);
     }

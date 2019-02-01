@@ -18,7 +18,7 @@ int main()
     char* ptr;
     int cont=0;
 
-    strcpy(filename,"startup.x");
+    strcpy(filename,"../startup.x");
 
     fp = fopen(filename, "r");
     if (fp == NULL){
@@ -27,6 +27,7 @@ int main()
     }
 
     pid_t pids[3];
+
     while (fgets(str, MAXCHAR, fp) != NULL){
         pid_t pid=fork();
         pids[cont]=pid;
@@ -34,16 +35,36 @@ int main()
         sscanf(str, "%[^:]:%d,%d", name, &keyd, &keyt);
         sprintf(keycd,"%d",keyd);
         sprintf(keyct,"%d",keyt);
-        strcpy(controllers,"./compiled/sensorSO ");
+        strcpy(controllers,"./compiled/lector ");
         strcat(controllers,name);
         strcat(controllers," ");
         strcat(controllers,keycd);
         strcat(controllers," ");
         strcat(controllers,keyct);
-        strcat(controllers," ");
-        strcat(controllers,keyct);
-        sleep(3);
-        printf("%s",controllers);
+        //sleep(3);
+        //printf("%s",controllers);
+        //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
+        if (pid==0) { /* child process */
+            //char *argv[]={"1", name,"3"};
+            //execl("compiled/sensorSO","argv",name,keycd,keyct,(char *)NULL);
+            execl("/usr/bin/terminator", "terminal", "-e", controllers, NULL);
+
+            exit(127); /* only if execv fails */
+        }
+        printf("[%d] [%d] i=%d\n", getppid(), getpid(), cont);
+        cont++;
+    }
+
+    rewind(fp);
+    cont=0;
+
+    while (fgets(str, MAXCHAR, fp) != NULL){
+        pid_t pid=fork();
+        pids[cont]=pid;
+        //printf("%s", str);
+        sscanf(str, "%[^:]:%d,%d", name, &keyd, &keyt);
+        sprintf(keycd,"%d",keyd);
+        sprintf(keyct,"%d",keyt);
         //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
         if (pid==0) { /* child process */
             //char *argv[]={"1", name,"3"};
@@ -55,6 +76,7 @@ int main()
         printf("[%d] [%d] i=%d\n", getppid(), getpid(), cont);
         cont++;
     }
+
     fclose(fp);
 
     return 0;

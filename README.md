@@ -1,4 +1,4 @@
-## Compilacion
+## Correr makeit para compilar y correr
 
 Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.c`:
 
