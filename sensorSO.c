@@ -109,7 +109,7 @@ int main()
 			strcpy(shmt,"--");
 	   }
 	}
-return(0);
+	return(0);
 
 }
 
@@ -140,4 +140,3 @@ float box_muller(float m, float s)	/* normal random variate generator */
 
 	return( m + y1 * s );
 }
-
