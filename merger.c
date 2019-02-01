@@ -7,9 +7,51 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <signal.h>
 
-#define MAXCHAR 25
+
+#define MAXCHAR 50
 #define SHMSZ   27
+
+typedef struct {
+    pid_t pid;
+    char name[10];
+    char keycd[5], keyct[5], keycI[5], keycQ[5];
+    int I, Q, status;
+} key_p;
+
+int createSensor(key_p key){
+    pid_t pid = key.pid;
+    char *name = key.name;
+    char *keycd = key.keycd;
+    char *keyct = key.keyct;
+    char *keycI = key.keycI;
+    char *keycQ = key.keycQ;
+
+    //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
+    if (pid==0) { /* child process */
+        //char *argv[]={"1", name,"3"};
+        execl("compiled/sensorSO","argv",name,keycd,keyct,keycI,keycQ,(char *)NULL);
+        //execl("/usr/bin/terminator", "terminator", "-e", controllers, NULL);
+        exit(127); /* only if execv fails */
+    }
+    printf("ParentId:[%d] \tProcessId:[%d] \n", getppid(), pid);
+    return 0;
+}
+
+int killSensor(key_p key){
+    key.pid=-1;
+    key.status=0;
+    return 0;
+}
+
+int reviveSensor(key_p key){
+    pid_t pid2=fork();
+    key.pid=pid2;
+    key.status=1;
+    createSensor(key);
+    return 0;
+}
 
 int main()
 {
@@ -18,17 +60,16 @@ int main()
     char filename[MAXCHAR];
     char controllers[MAXCHAR*2];
     char name[10];
-    int keyd, keyt, keyI, I;
-    char keycd[5], keyct[5], keycI[5];
+    int keyd, keyt, keyI, I, keyQ, Q;
+    char keycd[5], keyct[5], keycI[5], keycQ[5];
     char* ptr;
     int cont=0;
     key_t keysI;
-    int shmidI;
+    int shmidI, i;
     char *shmI;
-
+    key_p *keys;
 
     strcpy(filename,"compiled/startup.x");
-
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
@@ -36,83 +77,119 @@ int main()
     }
 
     //pid_t pids[3];
+    //Contar la cantidad de sensores existentes y crear el data set
+    while (fgets(str, MAXCHAR, fp) != NULL){cont++;}
+    
+    rewind(fp);
+    keys = (key_p*)malloc(cont*sizeof(key_p));
+    cont=0;
 
+    //Guardar los datos en el data set
     while (fgets(str, MAXCHAR, fp) != NULL){
         pid_t pid=fork();
         //pids[cont]=pid;
         //printf("%s", str);
-        sscanf(str, "%[^:]:%d,%d|%d", name, &keyd, &keyt, &keyI);
+        sscanf(str, "%[^:]:%d,%d;%d,%d;%d,%d", name, &keyd, &keyt, &keyI, &I, &keyQ, &Q);
         sprintf(keycd,"%d",keyd);
         sprintf(keyct,"%d",keyt);
         sprintf(keycI,"%d",keyI);
-        //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
-        if (pid==0) { /* child process */
-            //char *argv[]={"1", name,"3"};
-            execl("compiled/sensorSO","argv",name,keycd,keyct,keycI,(char *)NULL);
-            //execl("/usr/bin/terminator", "terminator", "-e", controllers, NULL);
-            exit(127); /* only if execv fails */
-        }
-        printf("[%d] [%d] i=%d\n", getppid(), pid, cont);
+        sprintf(keycQ,"%d",keyQ);
+
+        keys[cont].pid=pid;
+        strcpy(keys[cont].name,name);
+        strcpy(keys[cont].keycd,keycd);
+        strcpy(keys[cont].keyct,keyct);
+        strcpy(keys[cont].keycI,keycI);
+        keys[cont].I=I;
+        strcpy(keys[cont].keycQ,keycQ);
+        keys[cont].Q=Q;
+        keys[cont].status=1;
+        //printf("name: %s \nkeyd: %s \nkeyt: %s \n keyI:%s \nkeyQ: %s\nI:%d\tQ:%d\n",keys[cont].name,keys[cont].keycd,keys[cont].keyct,keys[cont].keycI,keys[cont].keycQ,I,Q);
+        createSensor(keys[cont]);
         cont++;
     }
 
+    fclose(fp);
     sleep(3);
-    rewind(fp);
-    cont=0;
 
-    while (fgets(str, MAXCHAR, fp) != NULL){
+    //Abrir 3 lectores en 3 terminales distintas
+    for(i=0; i<cont; i++){
         pid_t pid=fork();
-        //pids[cont]=pid;
-        //printf("%s", str);
-        sscanf(str, "%[^:]:%d,%d|%d", name, &keyd, &keyt, &keyI);
-        sprintf(keycd,"%d",keyd);
-        sprintf(keyct,"%d",keyt);
         strcpy(controllers,"./compiled/lector ");
-        strcat(controllers,name);
+        strcat(controllers,keys[i].name);
         strcat(controllers," ");
-        strcat(controllers,keycd);
+        strcat(controllers,keys[i].keycd);
         strcat(controllers," ");
-        strcat(controllers,keyct);
-        //sleep(3);
-        //printf("%s",controllers);
-        //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
+        strcat(controllers,keys[i].keyct);
         if (pid==0) { /* child process */
             //char *argv[]={"1", name,"3"};
             //execl("compiled/sensorSO","argv",name,keycd,keyct,(char *)NULL);
             execl("/usr/bin/terminator", "terminal", "-e", controllers, NULL);
             exit(127); /* only if execv fails */
         }
-        //printf("[%d] [%d] i=%d\n", getppid(), pid, cont);
-        cont++;
-    }
-
-    fclose(fp);
-
-    //Shared memory for time frecuency
-    keysI = keyI;
-    if ((shmidI = shmget(keysI, SHMSZ, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        return(1);
-    }    
-    if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
-        perror("shmat");
-        return(1);
     }
 
     while(1) {
         sleep(1);
 	    system("clear");
+        int n=0, m=0;
 
-        fprintf(stdout,"Intervalo actual I:(%s)\n",shmI);
-    	printf("Cual intervalo desea manejar\n(Elegir un numero entre 1-10): ");
-    	scanf("%d",&I);
-
-        if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);
-        else{ 
-            printf("\nNUEVO INTERVALO I:(%d)\n",I);
-            sprintf(shmI,"%d",I);
+        //printf("Sensor %s, keyI: %s\n", keys[0].name, keys[0].keycI);
+        sscanf(keys[0].keycI, "%d", &keyI);
+        if ((shmidI = shmget(keyI, SHMSZ, IPC_CREAT | 0666)) < 0) {
+            perror("shmget");
+            return(1);
+        }    
+        if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
+            perror("shmat");
+            return(1);
         }
-	}
 
+        printf("Cual sensor desea manejar\n(Elegir un numero entre 1-%d): ", cont);
+    	scanf("%d",&n);
+
+        if(n!=0){
+            printf("\n\t1. Cambiar intervalo I");
+            printf("\n\t2. Cambiar muestras  Q");
+            printf("\n\t3. Cambiar valor de  T");
+            printf("\n\t4. Cambiar valor de  W");
+            printf("\n\t5. Kill it   ");
+            printf("\n\t6. Revive it ");
+            printf("\n\t7. Salir ");
+            printf("\n\nOpcion: ");
+            scanf("%d",&m);
+
+            switch (m){
+                case 1:
+                    printf("\n(Elegir un numero entre 1-10): ");
+                    scanf("%d",&I);
+                    if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);
+                    else{ 
+                        printf("\nNUEVO INTERVALO I:(%d)\n",I);
+                        sprintf(shmI,"%d",I);
+                    }
+                    break;
+                case 2:
+                    // code to be executed if n is equal to constant1;
+                    break;
+                case 3:
+                    // code to be executed if n is equal to constant1;
+                    break;
+                case 4:
+                    // code to be executed if n is equal to constant1;
+                    break;
+                case 5:
+                    killSensor(keys[n]);
+                    kill(keys[n].pid, SIGKILL);
+                    break;
+                case 6:
+                    reviveSensor(keys[n]);
+                    break;
+                case 7:
+                    // code to be executed if n is equal to constant1;
+                    break;
+            }
+        }else{return 0;}
+	}
     return 0;
 }

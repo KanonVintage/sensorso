@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 			strcpy(shmt,"--");
 		}
 		//fprintf(stdout,"frec: %s\n",shmI);
-		//fprintf(stdout,"frec: %d\n",I);
+		//fprintf(stdout,"frec: %d\n",shmidI);
 	}
 	return(0);
 
