@@ -6,7 +6,7 @@ g++ -g sensorSO.c -o compiled/sensorSO -lm
 echo 'compilando lector.c en compiled/lector'
 g++ -g lector.c -o compiled/lector -lc
 echo 'compilando meger.c en compiled/alfa'
-g++ -g merger.c -o compiled/alfa
+g++ -g merger.c -o compiled/alfa -lc
 echo 'corriendo alfa'
 echo ' '
 echo '...'

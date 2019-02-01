@@ -38,11 +38,11 @@ float box_muller(float m, float s);	/* normal random variate generator */
 int main(int argc, char **argv)
 {
 	char c;
-    int shmidd,shmidt;
-	int keya, keyb;
-    key_t keyd,keyt;
-    char *shmd, *shmt;
-	int i,j;
+    int shmidd,shmidt,shmidI;
+    key_t keyd,keyt,keyI;
+    char *shmd, *shmt, *shmI;
+	int i,j,I=1;
+	int keya, keyb, keyc;
 	float distances[MAX_SAMPLES];
     float angles[MAX_SAMPLES_THETA];
     float anglesD[MAX_SAMPLES];
@@ -51,11 +51,13 @@ int main(int argc, char **argv)
 	//printf("Killed: %s	%s:%s",argv[1],argv[2],argv[3]);
 	sscanf(argv[2], "%d", &keya);
 	sscanf(argv[3], "%d", &keyb);
+	sscanf(argv[4], "%d", &keyc);
 
     struct timespec tim, tim2;
-    tim.tv_sec = 1;
+    tim.tv_sec = I;
     tim.tv_nsec = 0;
 
+	//Shared memory for distance
     keyd = keya;
     if ((shmidd = shmget(keyd, SHMSZ, IPC_CREAT | 0666)) < 0) {
         perror("shmget");
@@ -64,7 +66,8 @@ int main(int argc, char **argv)
     if ((shmd = (char *)shmat(shmidd, NULL, 0)) == (char *) -1) {
         perror("shmat");
         return(1);
-    }    
+    }
+	//Shared memory for angles
     keyt = keyb;
     if ((shmidt = shmget(keyt, SHMSZ, IPC_CREAT | 0666)) < 0) {
         perror("shmget");
@@ -73,7 +76,18 @@ int main(int argc, char **argv)
     if ((shmt = (char *)shmat(shmidt, NULL, 0)) == (char *) -1) {
         perror("shmat");
         return(1);
+    }
+	//Shared memory for time frecuency
+	keyI = keyc;
+    if ((shmidI = shmget(keyI, SHMSZ, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        return(1);
     }    
+    if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        return(1);
+    }
+	sprintf(shmI,"%d",I);
 
 	mu=0;
 	sigma=25;    
@@ -103,16 +117,24 @@ int main(int argc, char **argv)
 	}
 
 	for(i=0;i<j;i++){	
-	  if(nanosleep(&tim , &tim2) < 0 ) {
+		sscanf(shmI, "%d", &I);
+		tim.tv_sec = I;
+
+	  	if(nanosleep(&tim , &tim2) < 0 ) {
   			printf("Nano sleep failed \n");
 	        return -1;
-		}	
-	   sprintf(shmd,"%f",distances[i]);
-	   if (i%2==0){
+		}
+
+		if (i%1==0){
+			sprintf(shmd,"%f",distances[i]);
+		}
+		if (i%2==0){
 			sprintf(shmt,"%f",anglesD[i]); 
-	   }else{
+		}else{
 			strcpy(shmt,"--");
-	   }
+		}
+		//fprintf(stdout,"frec: %s\n",shmI);
+		//fprintf(stdout,"frec: %d\n",I);
 	}
 	return(0);
 

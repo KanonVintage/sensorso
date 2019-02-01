@@ -35,7 +35,7 @@ int main(int argc, char **argv){
     char tmpt[SHMSZ];
     int keya, keyb;
 
-    printf("Hello: %s	%s:%s\n",argv[1],argv[2],argv[3]);
+    printf("Currently: %s\n keyd:%s\t| keyt:%s\n\n",argv[1],argv[2],argv[3]);
     sscanf(argv[2], "%d", &keya);
 	sscanf(argv[3], "%d", &keyb);
 
