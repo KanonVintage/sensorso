@@ -24,20 +24,25 @@
 #include <string.h>
 
 #define SHMSZ     27
-int shmidd,shmidt;
-key_t keyd,keyt;
-char *shmd, *shmt;
+int shmidd,shmidt,shmidQ;
+key_t keyd,keyt,keyQ;
+char *shmd, *shmt, *shmQ;
 
 
 int main(int argc, char **argv){
 	char tmpd[SHMSZ];
     char oldt[SHMSZ];
     char tmpt[SHMSZ];
-    int keya, keyb;
+    int keya, keyb, keyq, Q=1;
 
     printf("Currently: %s\n keyd:%s\t| keyt:%s\n\n",argv[1],argv[2],argv[3]);
     sscanf(argv[2], "%d", &keya);
 	sscanf(argv[3], "%d", &keyb);
+    sscanf(argv[4], "%d", &keyq);
+    sscanf(argv[5], "%d", &Q);
+
+    //printf("keyd: %d \nkeyt: %d \nkeyQ: %d\nQ:%d\n",keya,keyb,keyq,Q);
+
 
     keyd = keya;
     if ((shmidd = shmget(keyd, SHMSZ, 0666)) < 0) {
@@ -58,6 +63,18 @@ int main(int argc, char **argv){
         perror("shmat");
         return(1);
     }
+    //Shared memory for sampling Q
+	keyQ = keyq;
+    if ((shmidQ = shmget(keyQ, SHMSZ, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        return(1);
+    }    
+    if ((shmQ = (char *)shmat(shmidQ, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        return(1);
+    }
+	sprintf(shmQ,"%d",Q);
+	//sscanf(shmI, "%d", &I);
 
     while(1){
 		strcpy(tmpt,shmt);

@@ -1,17 +1,17 @@
 #!/bin/bash
 echo 'startup.x lista la cantidad de sensores!'
 echo ' '
-echo 'compilando sensorSO.c en compiled/sensorSO'
-g++ -g sensorSO.c -o compiled/sensorSO -lm
-echo 'compilando lector.c en compiled/lector'
-g++ -g lector.c -o compiled/lector -lc
-echo 'compilando meger.c en compiled/alfa'
-g++ -g merger.c -o compiled/alfa -lc
-echo 'corriendo alfa'
+echo 'compilando sensorSO.c en run/sensorSO'
+g++ -g sensorSO.c -o run/sensorSO -lm
+echo 'compilando lector.c en run/lector'
+g++ -g lector.c -o run/lector -lc
+echo 'compilando remote.c en run/alfa'
+g++ -g remote.c -o run/remote -lc
+echo 'corriendo remote'
 echo ' '
 echo '...'
 echo ' '
-./compiled/alfa
+./run/remote
 
 
 

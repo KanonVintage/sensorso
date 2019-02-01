@@ -1,8 +1,8 @@
 # Compiled files
-compiled/*
+run/*
 old
 .vscode
-!compiled/startup.x
+!run/startup.x
 
 # OS stuff
 Desktop.ini
