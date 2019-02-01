@@ -2,6 +2,11 @@
 
 `startup.x` es el archivo de configuracion
 
+Tiene la siguiente estructura:
+```shell
+    nombre:keyd,keyt;keyI,Iinicial;keyQ,Qinicial
+```
+
 Seguir las siguientes instrucciones para compilar el `sensorSO.c` y `lector.c`:
 
 sensorSO.c:

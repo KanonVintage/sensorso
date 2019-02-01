@@ -27,11 +27,15 @@ int createSensor(key_p key){
     char *keyct = key.keyct;
     char *keycI = key.keycI;
     char *keycQ = key.keycQ;
+    char tmp1[5];
+    char tmp2[5];
+    sprintf(tmp1,"%d",key.I);
+    sprintf(tmp2,"%d",key.Q);
 
     //printf("name:%s  keyd:%s  keyt:%s\n", name,keycd,keyct);
     if (pid==0) { /* child process */
         //char *argv[]={"1", name,"3"};
-        execl("compiled/sensorSO","argv",name,keycd,keyct,keycI,keycQ,(char *)NULL);
+        execl("compiled/sensorSO","argv",name,keycd,keyct,keycI,keycQ,tmp1,tmp2,(char *)NULL);
         //execl("/usr/bin/terminator", "terminator", "-e", controllers, NULL);
         exit(127); /* only if execv fails */
     }
@@ -134,21 +138,16 @@ int main()
 	    system("clear");
         int n=0, m=0;
 
-        //printf("Sensor %s, keyI: %s\n", keys[0].name, keys[0].keycI);
-        sscanf(keys[0].keycI, "%d", &keyI);
-        if ((shmidI = shmget(keyI, SHMSZ, IPC_CREAT | 0666)) < 0) {
-            perror("shmget");
-            return(1);
-        }    
-        if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
-            perror("shmat");
-            return(1);
-        }
-
         printf("Cual sensor desea manejar\n(Elegir un numero entre 1-%d): ", cont);
+        for(i=0; i<cont; i++){
+            printf("\n\t%d. %s",i+1,keys[i].name);
+        }
+        printf("\n\t0. Salir");
+        printf("\nOpcion: ");
     	scanf("%d",&n);
+        n=n-1;
 
-        if(n!=0){
+        if(n>=0){
             printf("\n\t1. Cambiar intervalo I");
             printf("\n\t2. Cambiar muestras  Q");
             printf("\n\t3. Cambiar valor de  T");
@@ -161,6 +160,16 @@ int main()
 
             switch (m){
                 case 1:
+                    //printf("Sensor %s, keyI: %s\n", keys[0].name, keys[0].keycI);
+                    sscanf(keys[n].keycI, "%d", &keyI);
+                    if ((shmidI = shmget(keyI, SHMSZ, IPC_CREAT | 0666)) < 0) {
+                        perror("shmget");
+                        return(1);
+                    }    
+                    if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
+                        perror("shmat");
+                        return(1);
+                    }
                     printf("\n(Elegir un numero entre 1-10): ");
                     scanf("%d",&I);
                     if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);

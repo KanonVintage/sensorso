@@ -38,20 +38,25 @@ float box_muller(float m, float s);	/* normal random variate generator */
 int main(int argc, char **argv)
 {
 	char c;
-    int shmidd,shmidt,shmidI;
-    key_t keyd,keyt,keyI;
-    char *shmd, *shmt, *shmI;
-	int i,j,I=1;
-	int keya, keyb, keyc;
+    int shmidd,shmidt,shmidI,shmidQ;
+    key_t keyd,keyt,keyI,keyQ;
+    char *shmd, *shmt, *shmI, *shmQ;
+	int i,j,I=1,Q=1;
+	int keya, keyb, keyc, keyq;
 	float distances[MAX_SAMPLES];
     float angles[MAX_SAMPLES_THETA];
     float anglesD[MAX_SAMPLES];
 	float mu,sigma,delta_theta;
 
 	//printf("Killed: %s	%s:%s",argv[1],argv[2],argv[3]);
-	sscanf(argv[2], "%d", &keya);
+	sscanf(argv[2], "%d", &keya);  //turns ascii to integer
 	sscanf(argv[3], "%d", &keyb);
 	sscanf(argv[4], "%d", &keyc);
+	sscanf(argv[5], "%d", &keyq);
+	sscanf(argv[6], "%d", &I);
+	sscanf(argv[7], "%d", &Q);
+
+	//printf("keyd: %d \nkeyt: %d \nkeyI:%d \nkeyQ: %d\nI:%d\tQ:%d\n",keya,keyb,keyc,keyq,I,Q);
 
     struct timespec tim, tim2;
     tim.tv_sec = I;
@@ -77,7 +82,7 @@ int main(int argc, char **argv)
         perror("shmat");
         return(1);
     }
-	//Shared memory for time frecuency
+	//Shared memory for time interval I
 	keyI = keyc;
     if ((shmidI = shmget(keyI, SHMSZ, IPC_CREAT | 0666)) < 0) {
         perror("shmget");
@@ -88,6 +93,19 @@ int main(int argc, char **argv)
         return(1);
     }
 	sprintf(shmI,"%d",I);
+	//sscanf(shmI, "%d", &I);
+	//Shared memory for sampling Q
+	keyQ = keyq;
+    if ((shmidQ = shmget(keyQ, SHMSZ, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        return(1);
+    }    
+    if ((shmQ = (char *)shmat(shmidQ, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        return(1);
+    }
+	sprintf(shmQ,"%d",Q);
+	//sscanf(shmI, "%d", &I);
 
 	mu=0;
 	sigma=25;    
@@ -117,6 +135,8 @@ int main(int argc, char **argv)
 	}
 
 	for(i=0;i<j;i++){	
+		//printf("Intervalo inicial: %d \n",I);
+		//printf("Muestreo inicial: %d  \n",Q);
 		sscanf(shmI, "%d", &I);
 		tim.tv_sec = I;
 
