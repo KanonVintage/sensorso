@@ -5,8 +5,10 @@ echo 'compilando sensorSO.c en run/sensorSO'
 g++ -g sensorSO.c -o run/sensorSO -lm
 echo 'compilando lector.c en run/lector'
 g++ -g lector.c -o run/lector -lc
-echo 'compilando remote.c en run/alfa'
+echo 'compilando remote.c en run/remote'
 g++ -g remote.c -o run/remote -lc
+echo 'compilando visor.c en run/visor'
+g++ -g visor.c -o run/visor -lc
 echo 'corriendo remote'
 echo ' '
 echo '...'
