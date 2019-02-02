@@ -34,13 +34,37 @@ int main(int argc, char **argv){
     char *shmX[cont];
     int flags[cont], flag;
     int i=0;
+    int keyW, keyT;
+    int shmidI, shmidQ;
+    char *shmI, *shmQ;
 
-    int W = 2;
-    float T = 0.5;
+    int W = 1;
+    float T = 1;
 
     for(int i=0;i<cont;i++){
         sscanf(argv[i+2], "%d", &keys[i]);
     }
+
+    sscanf(argv[cont+2], "%d", &keyW);
+    sscanf(argv[cont+3], "%d", &keyT);
+
+    if ((shmidI = shmget(keyW, SHMSZ, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        return(1);
+    }    
+    if ((shmI = (char *)shmat(shmidI, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        return(1);
+    }sprintf(shmI,"%d",W);
+
+    if ((shmidQ = shmget(keyT, SHMSZ, IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        return(1);
+    }    
+    if ((shmQ = (char *)shmat(shmidQ, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        return(1);
+    }sprintf(shmQ,"%f",T);
 
     for(int i=0;i<cont;i++){
         if ((shmidX[i] = shmget(keys[i], SHMSZ, IPC_CREAT | 0666)) < 0) {
@@ -58,12 +82,18 @@ int main(int argc, char **argv){
             sscanf(shmX[i], "%f", &datos[i]);
             if(datos[i]!=0){
                 flags[i]=1;
+            }if(datos[i]==0){
+                flags[i]=0;
             }
             flag=flag+flags[i];
         }
+
         if(flag==cont){
             sleep(1);
             system("clear");
+            sscanf(shmI, "%d", &W);
+            sscanf(shmQ, "%f", &T);
+            printf("T:(%f)\tW:(%d)\n",T,W);
             sd=calculateSD(datos, cont);
             for(i=0;i<cont;i++){
                 if(i==0) printf("Sensor-cen:\t");
@@ -72,6 +102,7 @@ int main(int argc, char **argv){
                 if(i>2)  printf("Sensor %d:\t", i+1);
                 printf("%f \n", datos[i]);
             }
+            printf("\tdesviacion estandar: %f\n",sd);
             if((fabs(datos[0]-datos[1])<=T*sd)&&(fabs(datos[0]-datos[2])<=T*sd)){
                 printf("Es carro\n");
             }

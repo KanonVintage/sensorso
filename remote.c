@@ -58,12 +58,14 @@ int reviveSensor(key_p key){
     return 0;
 }
 
-int createVisor(key_p *key, int cont){
+int createVisor(key_p *key, int cont, int W, int T){
     pid_t pid=fork();
     char controllers[MAXCHAR*2];
-    char tmp[5];
+    char tmp[5], tmp2[5], tmp3[5];
 
     sprintf(tmp,"%d",cont);
+    sprintf(tmp2,"%d",W);
+    sprintf(tmp3,"%d",T);
     strcpy(controllers,"./run/visor ");
     strcat(controllers, tmp);
 
@@ -71,6 +73,11 @@ int createVisor(key_p *key, int cont){
         strcat(controllers," ");
         strcat(controllers, key[i].keycX);
     }
+    strcat(controllers," ");
+    strcat(controllers,tmp2);
+    strcat(controllers," ");
+    strcat(controllers,tmp3);
+
     if (pid==0) { /* child process */
         //char *argv[]={"1", name,"3"};
         //execl("run/sensorSO","argv",name,keycd,keyct,(char *)NULL);
@@ -94,9 +101,12 @@ int main()
     key_t keysI;
     int shmidI, shmidQ, i;
     char *shmI, *shmQ;
-    int T=1, W=1;
+    float T=1;
+    int W=1;
     key_p *keys;
     pid_t visor;
+    int keyW=rand() % 9000 + 1000; //Se lo puede inicializar con un valor fijo ej. 1000
+    int keyT=rand() % 9000 + 1000; //Se lo puede inicializar con un valor fijo ej. 9999
 
     strcpy(filename,"run/startup.x");
     fp = fopen(filename, "r");
@@ -173,14 +183,14 @@ int main()
         }*/
     }
 
-    visor = createVisor(keys,cont);
+    visor = createVisor(keys,cont, keyW, keyT);
 
     while(1) {
         sleep(1);
 	    system("clear");
         int n=0, m=0;
 
-        printf("Cual sensor desea manejar \tT:(%d)\t| W:(%d)\n", T, W);
+        printf("Cual sensor desea manejar \tT:(%f)\t| W:(%d)\n", T, W);
         printf("(Elegir un numero entre 1-%d): ", cont);
         for(i=0; i<cont; i++){
             printf("\n\t%d. %s\t\tI:(%d)\t| Q:(%d)",i+1,keys[i].name,keys[i].I,keys[i].Q);
@@ -193,8 +203,8 @@ int main()
         if(n>=0){
             printf("\n\t1. Cambiar intervalo I");
             printf("\n\t2. Cambiar muestras  Q");
-            printf("\n\t3. Cambiar valor de  T");
-            printf("\n\t4. Cambiar valor de  W");
+            printf("\n\t3. Cambiar valor de  W");
+            printf("\n\t4. Cambiar valor de  T");
             printf("\n\t5. Kill it   ");
             printf("\n\t6. Revive it ");
             printf("\n\t7. Salir ");
@@ -242,19 +252,39 @@ int main()
                     }
                     break;
                 case 3:
-                    printf("\n(Elegir un numero entre 1-10): ");
-                    scanf("%d",&I);
-                    if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);
-                    else{ 
-                        T=I;
+                    if ((shmidQ = shmget(keyW, SHMSZ, IPC_CREAT | 0666)) < 0) {
+                        perror("shmget");
+                        return(1);
+                    }    
+                    if ((shmQ = (char *)shmat(shmidQ, NULL, 0)) == (char *) -1) {
+                        perror("shmat");
+                        return(1);
                     }
-                    break;
-                case 4:
                     printf("\n(Elegir un numero entre 1-10): ");
                     scanf("%d",&I);
                     if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);
                     else{ 
                         W=I;
+                        printf("\nNUEVO VALOR W:(%d)\n",I);
+                        sprintf(shmQ,"%d",I);
+                    }
+                    break;
+                case 4:
+                    if ((shmidQ = shmget(keyT, SHMSZ, IPC_CREAT | 0666)) < 0) {
+                        perror("shmget");
+                        return(1);
+                    }    
+                    if ((shmQ = (char *)shmat(shmidQ, NULL, 0)) == (char *) -1) {
+                        perror("shmat");
+                        return(1);
+                    }
+                    printf("\n(Elegir un numero entre 1-10): ");
+                    scanf("%d",&I);
+                    if(I<1 || I>10) printf("\nError %d: OPCION INVALIDA\n",I);
+                    else{ 
+                        T=I*0.1;
+                        printf("\nNUEVO VALOR T:(%f)\n",T);
+                        sprintf(shmQ,"%f",T);
                     }
                     break;
                 case 5:
